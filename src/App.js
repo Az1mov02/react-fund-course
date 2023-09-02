@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useMemo} from 'react';
 import Counter from "./components/Counter"
 import ClassCounter from "./components/ClassCounter";
 import './styles/App.css'
@@ -11,12 +11,25 @@ import MySelect from './components/UI/select/MySelect'
 
 function App() {
   const [posts, setPosts] = useState([
-    {id: 1, title: 'JavaScript', body: 'Description'},
-    {id: 2, title: 'Python', body: 'Description'},
-    {id: 3, title: 'C++ ', body: 'Description'}
+    {id: 1, title: 'JavaScript', body: 'Description 1'},
+    {id: 2, title: 'Python', body: 'Description 2' },
+    {id: 3, title: 'C++ ', body: 'Description 3'}
   ])
 
   const [selectedSort, setSelectedSort] = useState('')
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const  sortedPosts = useMemo( () => {
+    console.log('Отработала функция сортед постс')
+    if(selectedSort){
+      return  [...posts].sort((a,b)=>a[selectedSort].localeCompare(b[selectedSort]))
+    }
+    return posts;
+  }, [selectedSort, posts])
+
+  const sortedAndSearchedPosts =  useMemo(() => {
+  return  sortedPosts.filter(post => post.title.includes(searchQuery))
+  },[searchQuery, sortedPosts] )
 
   const createPost = (newPost) => {
     setPosts([...posts, newPost])
@@ -29,7 +42,6 @@ function App() {
 
   const sortPosts = (sort) => {
     setSelectedSort(sort);
-  console.log(sort);
   }
 
 
@@ -38,6 +50,11 @@ function App() {
       <PostForm create={createPost}/>
       <hr style={{margin: '15px 0'}}/>
       <div>
+        <MyInput
+        placeholder = "Поиск..."
+        value = {searchQuery}
+        onChange = {e => setSearchQuery(e.target.value)}
+        />
         <MySelect
           value={selectedSort}
           onChange = {sortPosts}
@@ -49,7 +66,7 @@ function App() {
         />
       </div>
       {posts.length
-        ? <PostList remove={removePost} posts={posts} title="Список постов про JS"/>
+        ? <PostList remove={removePost} posts={sortedAndSearchedPosts} title="Список постов про JS"/>
         : <h1 style={{textAlign: 'center'}}>Посты не найдены</h1>
       }
 
