@@ -10,48 +10,43 @@ import PostForm from "./components/PostForm";
 import MySelect from './components/UI/select/MySelect'
 import PostFilter from "./components/PostFilter";
 import MyModal from "./components/UI/modal/MyModal";
+import {usePosts} from "./hooks/usePosts";
+import axios from "axios";
 
 function App() {
-  const [posts, setPosts] = useState([
-    {id: 1, title: 'JavaScript', body: 'Description 1'},
-    {id: 2, title: 'Python', body: 'Description 2'},
-    {id: 3, title: 'C++ ', body: 'Description 3'}
-  ])
+  const [posts, setPosts] = useState([])
 
   const [filter, setFilter] = useState({sort: '', query: ''})
-const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(false);
 
+  const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query)
 
-  const sortedPosts = useMemo(() => {
-    console.log('Отработала функция сортед постс')
-    if (filter.sort) {
-      return [...posts].sort((a, b) => a[filter.sort].localeCompare(b[filter.sort]))
-    }
-    return posts;
-  }, [filter.sort, posts])
-
-  const sortedAndSearchedPosts = useMemo(() => {
-    return sortedPosts.filter(post => post.title.toLowerCase().includes(filter.query))
-  }, [filter.query, sortedPosts])
 
   const createPost = (newPost) => {
     setPosts([...posts, newPost])
     setModal(false);
   }
 
-  // Полусаем post из дочернего компонента
+  async function fetchPosts() {
+    const response = await axios.get('https://jsonplaceholder.typicode.com/posts');
+    setPosts(response.data);
+  }
+
+  // Получаем post из дочернего компонента
+
   const removePost = (post) => {
     setPosts(posts.filter(p => p.id !== post.id))
   }
 
   return (
     <div className="App">
+      <button onClick={fetchPosts}>GET POSTS</button>
       <MyButton style={{marginTop: 30}} onClick={() => setModal(true)}>
         Создать пользователя
       </MyButton>
       <MyModal visible={modal} setVisible={setModal}>
         <PostForm create={createPost}/>
-      </MyModal >
+      </MyModal>
 
       <hr style={{margin: '15px 0'}}/>
       <PostFilter
