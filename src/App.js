@@ -1,4 +1,4 @@
-import React, {useState, useRef, useMemo} from 'react';
+import React, {useState, useRef, useMemo, useEffect} from 'react';
 import Counter from "./components/Counter"
 import ClassCounter from "./components/ClassCounter";
 import './styles/App.css'
@@ -12,15 +12,19 @@ import PostFilter from "./components/PostFilter";
 import MyModal from "./components/UI/modal/MyModal";
 import {usePosts} from "./hooks/usePosts";
 import axios from "axios";
+import PostService from "./API/PostService";
 
 function App() {
-  const [posts, setPosts] = useState([])
-
-  const [filter, setFilter] = useState({sort: '', query: ''})
+  const [posts, setPosts] = useState([]);
+  const [filter, setFilter] = useState({sort: '', query: ''});
   const [modal, setModal] = useState(false);
+  const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
+  const [isPostsLoading, setIsPostsLoading] = useState(false);
 
-  const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query)
 
+  useEffect(() => {
+    fetchPosts();
+  }, [])
 
   const createPost = (newPost) => {
     setPosts([...posts, newPost])
@@ -28,19 +32,22 @@ function App() {
   }
 
   async function fetchPosts() {
-    const response = await axios.get('https://jsonplaceholder.typicode.com/posts');
-    setPosts(response.data);
+    setIsPostsLoading(true);
+    setTimeout(async () => {
+      const posts = await PostService.getAll();
+      setPosts(posts);
+      setIsPostsLoading(false);
+    }, 1000)
+
   }
 
-  // Получаем post из дочернего компонента
-
+  // Получаем post из дочернего компон
   const removePost = (post) => {
     setPosts(posts.filter(p => p.id !== post.id))
   }
 
   return (
     <div className="App">
-      <button onClick={fetchPosts}>GET POSTS</button>
       <MyButton style={{marginTop: 30}} onClick={() => setModal(true)}>
         Создать пользователя
       </MyButton>
@@ -53,8 +60,10 @@ function App() {
         filter={filter}
         setFilter={setFilter}
       />
-
-      <PostList remove={removePost} posts={sortedAndSearchedPosts} title="Список постов про JS"/>
+      {isPostsLoading
+      ? <h1>Идет загрузка....</h1>
+      :<PostList remove={removePost} posts={sortedAndSearchedPosts} title="Список постов про JS"/>
+      }
 
     </div>
   )
